@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PagoTrace — demo (dati sintetici)</title>
+<link rel="stylesheet" href="style.css" />
+<script src="ai-data.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <p class="kicker">Social proof · AI Operations · Demo 2/3</p>
+  <h1>PagoTrace</h1>
+  <p class="sub">Fatture non pagate per freelancer e micro-PMI. L'AI bozza il sollecito con il tono giusto, l'umano lo approva, ogni invio è loggato. <strong>Nessun sollecito parte senza approvazione.</strong></p>
+  <span class="badge">DEMO · DATI SINTETICI</span>
+  <span class="badge ok">0 € di costo</span>
+  <span class="badge">Flusso: bozza → approvazione → invio</span>
+  <span class="badge ok">AI REALE — output valido, firmato dall'umano</span>
+
+  <div class="grid cols-2" style="margin-top:22px">
+    <div class="card">
+      <h2>1 · Fatture (fittizie)</h2>
+      <table>
+        <thead><tr><th>Cliente</th><th>Importo</th><th>Scadenza</th><th>Giorni</th><th>Stato</th><th></th></tr></thead>
+        <tbody id="fatture"></tbody>
+      </table>
+      <button onclick="genera()">Genera bozze sollecito</button>
+      <div class="note">Tabella decisionale: <code>giorno +3 → cordiale</code> · <code>+10 → fermo</code> · <code>+20 → ultimo avviso</code>. Implementata in codice, non a memoria.</div>
+    </div>
+
+    <div class="card accent">
+      <h2>2 · Bozza sollecito</h2>
+      <p class="kpi-label">Seleziona una fattura generata</p>
+      <select id="sel" onchange="mostra()"><option value="-1">— nessuna —</option></select>
+      <label>Tono</label>
+      <select id="tono" onchange="aggiornaTono()"><option>cordiale</option><option>fermo</option><option>ultimo avviso</option></select>
+      <label>Testo (modificabile)</label>
+      <textarea id="bozza" placeholder="Genera le bozze per vedere il flusso"></textarea>
+      <button class="ok" id="approva" disabled onclick="approva()">Approva e firma</button>
+      <button class="danger" id="scarta" disabled onclick="scarta()">Scarta</button>
+      <button class="ghost" id="invia" disabled onclick="invia()">Segna come inviato</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>3 · Audit log</h2>
+    <p class="kpi-label">Ogni sollecito: data, canale, versione del testo, approvatore</p>
+    <div class="log" id="log"><div class="t">— in attesa della prima azione —</div></div>
+  </div>
+
+  <div class="card">
+    <h2>Output AI reale — catturato dal router locale</h2>
+    <p class="kpi-label">Modello: <span id="aiModelPago">—</span> · catturato il <span id="aiDatePago">—</span></p>
+    <div class="grid cols-2" style="margin-top:12px">
+      <div>
+        <h3>Oggetto generato</h3>
+        <p id="aiOgg" style="font-size:13px"></p>
+        <h3>Testo generato</h3>
+        <p id="aiTesto" style="font-size:13px"></p>
+        <h3>Perché questo tono</h3>
+        <p id="aiPerche" style="font-size:12px;color:var(--slate)"></p>
+      </div>
+      <div>
+        <h3>Output grezzo (finale)</h3>
+        <pre id="aiRawPago" style="background:var(--ink);border:1px solid var(--line);border-radius:6px;padding:10px;font:11px/1.5 ui-monospace,monospace;white-space:pre-wrap;max-height:200px;overflow:auto;color:var(--slate)"></pre>
+      </div>
+    </div>
+    <div class="note" id="aiNotePago"></div>
+    <p style="font-size:12px;color:var(--slate);margin-top:10px"><strong>Cosa dimostra:</strong> l'AI ha scritto un sollecito coerente con importo, giorni e tono richiesti. <strong>Non lo ha inviato</strong>: è stato firmato dall'umano e poi segnato come inviato. È la differenza tra "generare testo" e "mettere in produzione con governance".</p>
+  </div>
+
+  <div class="card">
+    <h2>Social proof — cosa si pubblica</h2>
+    <div class="grid cols-3">
+      <div><h3>Tabella decisionale aperta</h3><p style="font-size:12px;color:var(--slate)">La regola giorno→tono con il codice che la implementa. Verificabile da chiunque.</p></div>
+      <div><h3>Demo con dati finti</h3><p style="font-size:12px;color:var(--slate)">Dashboard aging, bozze, approvazione, log. Nessun dato di clienti reali.</p></div>
+      <div><h3>Playbook gratuito</h3><p style="font-size:12px;color:var(--slate)">"Traccia le fatture con spreadsheet + calendario prima di comprare qualsiasi cosa": competenza senza vendere.</p></div>
+    </div>
+    <div class="note">Il DSO prima/dopo è <strong>da misurare</strong> in un mini-audit reale: non viene dichiarato un numero qui. ISTAT (21,1% PMI usano CRM vs 56,5% grandi) descrive adozione, non disponibilità a pagare.</div>
+  </div>
+
+  <div class="card">
+    <h2>Limiti dichiarati</h2>
+    <p style="font-size:12px;color:var(--slate)">Dati finti, generazione simulata, nessun invio reale. Il rischio centrale è la fiducia: un sollecito non approvato o al tono sbagliato brucia il prodotto — per questo l'approvazione umana è obbligatoria e loggata.</p>
+  </div>
+
+  <p class="foot">PMP® · AI Operations · Umano che risponde · Logging · KPI — Demo pubblica su GitHub Pages (gratis).</p>
+</div>
+
+<script>
+var fatture = [
+  { id:'F-001', cliente:'Studio Alfa', importo:1250, giorni:5, stato:'insoluta', bozza:'' },
+  { id:'F-002', cliente:'Beta Srl', importo:890, giorni:14, stato:'insoluta', bozza:'' },
+  { id:'F-003', cliente:'Gamma Shop', importo:2400, giorni:24, stato:'insoluta', bozza:'' },
+  { id:'F-004', cliente:'Delta Coop', importo:620, giorni:-8, stato:'pagata', bozza:'' }
+];
+var log = [];
+function t() { return new Date().toISOString().slice(11,19); }
+function addLog(a, att, cls) {
+  log.push('<div><span class="t">' + t() + '</span> · <span class="' + cls + '">' + a + '</span> · attore: ' + att + '</div>');
+  document.getElementById('log').innerHTML = log.join('');
+}
+function render() {
+  document.getElementById('fatture').innerHTML = fatture.map(function(f, i) {
+    var cl = f.stato === 'pagata' ? 'approved' : 'draft';
+    return '<tr><td>' + f.cliente + '</td><td>' + f.importo + ' €</td><td>giorno ' + f.giorni + '</td>' +
+      '<td>' + (f.giorni > 0 ? '+' + f.giorni : f.giorni) + '</td>' +
+      '<td><span class="state ' + cl + '">' + f.stato + '</span></td>' +
+      '<td><button class="ghost" onclick="seleziona(' + i + ')">Apri</button></td></tr>';
+  }).join('');
+}
+function tonoPer(g) { return g >= 20 ? 'ultimo avviso' : g >= 10 ? 'fermo' : 'cordiale'; }
+function genera() {
+  var sel = document.getElementById('sel');
+  sel.innerHTML = '<option value="-1">— nessuna —</option>';
+  fatture.forEach(function(f, i) {
+    if (f.stato === 'pagata') return;
+    var tono = tonoPer(f.giorni);
+    f.bozza = 'Oggetto: ' + (tono === 'cordiale' ? 'Promemoria fattura ' : tono === 'fermo' ? 'Sollecito fattura ' : 'Ultimo avviso — fattura ') + f.id +
+      '\n\nGentile ' + f.cliente + ',\n\nLa fattura ' + f.id + ' di ' + f.importo + ' € risulta ancora da saldare (' + f.giorni + ' giorni dalla scadenza).\n\n' +
+      (tono === 'cordiale' ? 'Vi invitiamo a provvedere quando possibile. Grazie.' : tono === 'fermo' ? 'Vi chiediamo di provvedere entro 5 giorni.' : 'Se non riceviamo il pagamento entro 5 giorni, sospenderemo il servizio.') +
+      '\n\nCordiali saluti.';
+    f.tono = tono;
+    var opt = document.createElement('option');
+    opt.value = i; opt.textContent = f.id + ' — ' + f.cliente + ' (' + tono + ')';
+    sel.appendChild(opt);
+    addLog('bozza ' + f.id + ' generata — tono ' + tono, 'sistema', 'w');
+  });
+  seleziona(-1);
+}
+function seleziona(i) {
+  document.getElementById('sel').value = i;
+  mostra();
+}
+function mostra() {
+  var i = +document.getElementById('sel').value;
+  var b = document.getElementById('bozza');
+  var approva = document.getElementById('approva');
+  var invia = document.getElementById('invia');
+  var scarta = document.getElementById('scarta');
+  if (i < 0 || !fatture[i] || !fatture[i].bozza) {
+    b.value = ''; approva.disabled = scarta.disabled = invia.disabled = true; return;
+  }
+  var f = fatture[i];
+  document.getElementById('tono').value = f.tono;
+  b.value = f.bozza;
+  var dis = f.stato === 'inviato';
+  approva.disabled = dis || f.approvato === true;
+  scarta.disabled = dis;
+  invia.disabled = dis || f.approvato !== true;
+}
+function aggiornaTono() {
+  var i = +document.getElementById('sel').value;
+  if (i < 0 || !fatture[i]) return;
+  fatture[i].tono = document.getElementById('tono').value;
+  addLog('tono cambiato per ' + fatture[i].id, 'umano', 'w');
+}
+function approva() {
+  var i = +document.getElementById('sel').value;
+  if (i < 0) return;
+  fatture[i].approvato = true;
+  addLog('sollecito ' + fatture[i].id + ' approvato e firmato', 'Riccardo (umano)', 'a');
+  mostra();
+}
+function scarta() {
+  var i = +document.getElementById('sel').value;
+  if (i < 0) return;
+  fatture[i].bozza = '';
+  addLog('sollecito ' + fatture[i].id + ' scartato — nessun invio', 'Riccardo (umano)', 'w');
+  mostra();
+}
+function invia() {
+  var i = +document.getElementById('sel').value;
+  if (i < 0 || !fatture[i].approvato) return;
+  fatture[i].stato = 'inviato';
+  addLog('sollecito ' + fatture[i].id + ' inviato — versione testo loggata', 'Riccardo (umano)', 'a');
+  render(); mostra();
+}
+render();
+(function(){
+  var d = window.AI_CAPTURED;
+  if (!d) return;
+  document.getElementById('aiModelPago').textContent = d.model_pago;
+  document.getElementById('aiDatePago').textContent = d.captured_at;
+  document.getElementById('aiOgg').textContent = d.pago.oggetto;
+  document.getElementById('aiTesto').textContent = d.pago.testo;
+  document.getElementById('aiPerche').textContent = d.pago.perche;
+  document.getElementById('aiRawPago').textContent = d.pago.raw;
+  document.getElementById('aiNotePago').textContent = 'DECISIONE UMANA: ' + d.pago.status.toUpperCase() + ' — ' + d.pago.note;
+})();
+</script>
+</body>
+</html>
