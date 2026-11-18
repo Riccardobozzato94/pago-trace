@@ -2,27 +2,28 @@
 <html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>PagoTrace</title><link rel="stylesheet" href="style.css"></head>
 <body><div class="wrap">
-  <p class="kicker">Strumento 2</p>
-  <h1>PagoTrace</h1>
-  <p class="sub">Vedi le fatture da sollecitare. Il testo del promemoria è pronto; lo rileggi, lo firmi e poi lo invii.</p>
+  <p class="kicker">PagoTrace — strumenti pubblici di <a href="https://riccardobozzato.com/">Riccardo Bozzato</a></p>
+  <h1>Le fatture da sollecitare, scritte bene e firmate da te.</h1>
+  <p class="sub">Tre fatture scadute, tre toni diversi. Il sistema prepara il testo del promemoria in base ai giorni di ritardo: tu lo rileggi, lo firmi e decidi se segnarlo come inviato. Non scrive al tuo cliente.</p>
 
   <div class="grid cols-2" style="margin-top:18px">
     <div class="card">
-      <h2>1. Fatture da seguire</h2>
+      <h2>01 · Le fatture</h2>
       <table><thead><tr><th>Fattura</th><th>Importo</th><th>Ritardo</th><th></th></tr></thead><tbody id="tab"></tbody></table>
       <button onclick="prepara()">Prepara i promemoria</button>
-      <p class="hint">Regola: 3 giorni → gentile, 10 → deciso, 20 → ultimo avviso.</p>
+      <p class="hint">Regola: oltre 3 giorni tono gentile, oltre 10 deciso, oltre 20 ultimo avviso. La regola è nel codice, non nel modello.</p>
     </div>
     <div class="card accent">
-      <h2>2. Rileggi e firma</h2>
+      <h2>02 · Rileggi e firma</h2>
       <label>Promemoria</label><select id="sel" onchange="mostra()"><option value="-1">—</option></select>
       <label>Testo</label><textarea id="bozza"></textarea>
       <button class="ok" id="app" disabled onclick="app()">Firma</button>
       <button class="ghost" id="invia" disabled onclick="invia()">Segna inviato</button>
     </div>
   </div>
-  <div class="card" style="margin-top:14px"><h2>3. Registro</h2><div class="log" id="log"><div class="t">—</div></div></div>
-  <p class="foot">Dati di esempio. Nessun invio automatico. Nessun dato reale.</p>
+  <div class="card" style="margin-top:14px"><h2>03 · Registro</h2><div class="log" id="log"><div class="t">—</div></div></div>
+  <p class="foot">Fatture e clienti inventati. "Segna inviato" non invia nulla: registri solo che hai spedito tu il promemoria.</p>
+  <p class="foot"><a href="https://github.com/Riccardobozzato94/pago-trace">Codice su GitHub</a> · <a href="https://riccardobozzato.com/metodo">Come lavoro</a> · <a href="https://riccardobozzato.com/contatti">Parliamone</a></p>
 </div>
 <script>
 var f=[{id:'F-001',cliente:'Studio Alfa',imp:1250,g:5},{id:'F-002',cliente:'Beta Srl',imp:890,g:14},{id:'F-003',cliente:'Gamma Shop',imp:2400,g:24}],log=[];
