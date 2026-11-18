@@ -67,6 +67,12 @@
     </div>
     <div class="note" id="aiNotePago"></div>
     <p style="font-size:12px;color:var(--slate);margin-top:10px"><strong>Cosa dimostra:</strong> l'AI ha scritto un sollecito coerente con importo, giorni e tono richiesti. <strong>Non lo ha inviato</strong>: è stato firmato dall'umano e poi segnato come inviato. È la differenza tra "generare testo" e "mettere in produzione con governance".</p>
+
+    <div class="hr"></div>
+    <h3>I 3 toni — generati davvero dall'AI (stessi dati, giorni diversi)</h3>
+    <p class="kpi-label">Modello: Qwen3.6-27B · catturati il 18/11/2026</p>
+    <div id="aiToni" style="margin-top:10px"></div>
+    <p style="font-size:12px;color:var(--slate);margin-top:10px"><strong>Il miglioramento:</strong> la tabella decisionale non è più solo una regola scritta: ogni tono è un output AI reale, con oggetto e testo. L'umano sceglie quale usare e firma. È PMP® applicato a un processo ripetitivo: regola → output → approvazione → log.</p>
   </div>
 
   <div class="card">
@@ -187,6 +193,15 @@ render();
   document.getElementById('aiPerche').textContent = d.pago.perche;
   document.getElementById('aiRawPago').textContent = d.pago.raw;
   document.getElementById('aiNotePago').textContent = 'DECISIONE UMANA: ' + d.pago.status.toUpperCase() + ' — ' + d.pago.note;
+  var toni = d.pago_toni || {};
+  var order = ['cordiale','fermo','ultimo avviso'];
+  document.getElementById('aiToni').innerHTML = order.filter(function(k){return toni[k];}).map(function(k){
+    var x = toni[k];
+    return '<div class="card" style="margin-bottom:10px;padding:12px">' +
+      '<p class="kpi-label">' + k.toUpperCase() + ' · giorno +' + x.days + ' · ' + (x.model||'') + '</p>' +
+      '<p style="font-size:13px"><strong>' + x.oggetto + '</strong></p>' +
+      '<p style="font-size:12px;color:var(--slate)">' + x.testo + '</p></div>';
+  }).join('');
 })();
 </script>
 </body>
